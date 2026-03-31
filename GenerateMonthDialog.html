@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5efe7;
+        --panel: #fffaf4;
+        --line: #d8c6b4;
+        --text: #35281d;
+        --muted: #6b5a4d;
+        --accent: #8b3a3a;
+        --accent-strong: #6c2c2c;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 14px/1.5 Georgia, "Times New Roman", serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(139, 58, 58, 0.12), transparent 28%),
+          linear-gradient(160deg, #f7f0e8 0%, #efe3d5 100%);
+      }
+
+      .shell { min-height: 100vh; padding: 24px; }
+      .panel {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(255, 250, 244, 0.95);
+        border: 1px solid rgba(107, 90, 77, 0.18);
+        box-shadow: 0 18px 50px rgba(53, 40, 29, 0.14);
+        border-radius: 22px;
+        overflow: hidden;
+      }
+
+      .hero {
+        padding: 24px 28px 18px;
+        background:
+          linear-gradient(130deg, rgba(139, 58, 58, 0.14), rgba(255, 250, 244, 0.6)),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+      }
+
+      .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.1; }
+      .hero p { margin: 0; color: var(--muted); }
+      .content { padding: 20px 28px 28px; }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      label { font-weight: 700; }
+      input, select, button { font: inherit; }
+      input, select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--text);
+      }
+
+      .tip {
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(139, 58, 58, 0.08);
+        color: var(--muted);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 18px;
+        overflow: hidden;
+        background: white;
+        border: 1px solid rgba(107, 90, 77, 0.2);
+      }
+
+      th, td {
+        padding: 12px 10px;
+        border-bottom: 1px solid rgba(107, 90, 77, 0.12);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th { background: rgba(224, 217, 204, 0.38); }
+      tbody tr:last-child td { border-bottom: 0; }
+      .employee-name { font-weight: 700; }
+      .employee-meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .status { min-height: 22px; color: var(--muted); }
+      .status.error { color: var(--accent-strong); }
+
+      .report {
+        display: none;
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(107, 90, 77, 0.18);
+      }
+
+      .report.visible {
+        display: block;
+      }
+
+      .report h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+
+      .report pre {
+        margin: 0;
+        white-space: pre-wrap;
+        font: 13px/1.55 Consolas, "Courier New", monospace;
+        color: var(--text);
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #fffaf4;
+        box-shadow: 0 10px 24px rgba(108, 44, 44, 0.24);
+      }
+
+      button:disabled { opacity: 0.6; cursor: wait; }
+
+      @media (max-width: 760px) {
+        .shell { padding: 12px; }
+        .row { grid-template-columns: 1fr; }
+        th, td { padding: 10px 8px; }
+        .actions { flex-direction: column; align-items: stretch; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="panel">
+        <div class="hero">
+          <h1>Новый график фотографов</h1>
+          <p>Скрипт создаст новый месячный лист на основе предыдущего шаблона, распределит выходные, отпуск и дежурства.</p>
+        </div>
+        <div class="content">
+          <div class="tip" id="tip">Загружаю сотрудников и настройки...</div>
+
+          <div class="row">
+            <div class="field">
+              <label for="month">Месяц</label>
+              <select id="month"></select>
+            </div>
+            <div class="field">
+              <label for="year">Год</label>
+              <input id="year" type="number" min="2024" step="1" />
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Сотрудник</th>
+                <th>Норма часов</th>
+                <th>Отпуск с</th>
+                <th>Отпуск по</th>
+              </tr>
+            </thead>
+            <tbody id="employees-body"></tbody>
+          </table>
+
+          <div class="actions">
+            <div class="status" id="status"></div>
+            <button id="submit" type="button" onclick="submitForm()">Создать лист месяца</button>
+          </div>
+
+          <div class="report" id="report">
+            <h2 id="report-title">Проверка после генерации</h2>
+            <pre id="report-body"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let dialogData = null;
+
+      function setStatus(message, isError) {
+        const node = document.getElementById('status');
+        node.textContent = message || '';
+        node.className = isError ? 'status error' : 'status';
+      }
+
+      function setReport(title, body) {
+        const panel = document.getElementById('report');
+        const titleNode = document.getElementById('report-title');
+        const bodyNode = document.getElementById('report-body');
+
+        if (!body) {
+          panel.className = 'report';
+          titleNode.textContent = 'Проверка после генерации';
+          bodyNode.textContent = '';
+          return;
+        }
+
+        panel.className = 'report visible';
+        titleNode.textContent = title || 'Проверка после генерации';
+        bodyNode.textContent = body;
+      }
+
+      function render(data) {
+        dialogData = data;
+        const monthSelect = document.getElementById('month');
+        monthSelect.innerHTML = '';
+
+        data.monthNames.forEach((name, index) => {
+          const option = document.createElement('option');
+          option.value = index + 1;
+          option.textContent = name;
+          if (index + 1 === data.suggestedMonth) option.selected = true;
+          monthSelect.appendChild(option);
+        });
+
+        document.getElementById('year').value = data.suggestedYear;
+        document.getElementById('tip').textContent =
+          'Постоянные правила сотрудников лежат на листе "' +
+          data.settingsSheetName +
+          '". Здесь вводятся только месяц, норма часов и отпуск.';
+
+        const body = document.getElementById('employees-body');
+        body.innerHTML = '';
+
+        data.employees.forEach((employee) => {
+          const row = document.createElement('tr');
+          const meta = [];
+          if (employee.fixedOffWeekdays) meta.push('фикс. выходные: ' + employee.fixedOffWeekdays);
+          if (employee.requiresWeekendPair) meta.push('нужна пара сб+вс');
+          if (employee.allThursdaysWork) meta.push('четверг рабочий');
+
+          row.innerHTML =
+            '<td><div class="employee-name">' +
+            escapeHtml(employee.name) +
+            '</div><div class="employee-meta">' +
+            escapeHtml(meta.join(' • ') || 'правила берутся из листа настроек') +
+            '</div></td>' +
+            '<td><input type="number" min="8" step="8" data-name="' +
+            escapeAttr(employee.name) +
+            '" class="norm-input" value="' +
+            escapeAttr(employee.defaultNormHours || '') +
+            '" /></td>' +
+            '<td><input type="date" data-name="' +
+            escapeAttr(employee.name) +
+            '" class="vacation-from" /></td>' +
+            '<td><input type="date" data-name="' +
+            escapeAttr(employee.name) +
+            '" class="vacation-to" /></td>';
+
+          body.appendChild(row);
+        });
+
+        setStatus('');
+        setReport('', '');
+      }
+
+      function collectEmployees() {
+        return dialogData.employees.map((employee) => {
+          const name = employee.name;
+          return {
+            name: name,
+            normHours: Number(document.querySelector('.norm-input[data-name="' + cssEscape(name) + '"]').value),
+            vacationFrom: document.querySelector('.vacation-from[data-name="' + cssEscape(name) + '"]').value || '',
+            vacationTo: document.querySelector('.vacation-to[data-name="' + cssEscape(name) + '"]').value || '',
+          };
+        });
+      }
+
+      function setLoading(isLoading) {
+        document.getElementById('submit').disabled = isLoading;
+      }
+
+      function submitForm() {
+        if (!dialogData) return;
+        setLoading(true);
+        setStatus('Формирую новый лист...');
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            setLoading(false);
+            setStatus('Готово: создан лист "' + result.sheetName + '".');
+            setReport(result.reportTitle, result.reportText);
+          })
+          .withFailureHandler((error) => {
+            setLoading(false);
+            setStatus(error && error.message ? error.message : String(error), true);
+          })
+          .createMonthSchedule({
+            month: Number(document.getElementById('month').value),
+            year: Number(document.getElementById('year').value),
+            employees: collectEmployees(),
+          });
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+
+      function cssEscape(value) {
+        return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      }
+
+      google.script.run
+        .withSuccessHandler(render)
+        .withFailureHandler((error) => {
+          document.getElementById('tip').textContent =
+            error && error.message ? error.message : String(error);
+          setStatus('Не удалось загрузить данные для диалога.', true);
+        })
+        .getDialogData();
+    </script>
+  </body>
+</html>
